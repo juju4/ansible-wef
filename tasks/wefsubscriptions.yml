@@ -16,7 +16,7 @@
 
 - name: Check if EventLog channel exists
   win_reg_stat:
-    path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\CustomEventChannels'
+    path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\WEC-Powershell'
   register: cec
  
 - block:
@@ -27,7 +27,13 @@
       win_command: >
         wevtutil sl {{ item }} /ms:4294967296
       with_items:
-        - WEC
+        - WEC-Powershell
+        - WEC-WMI
+        - WEC-EMET
+        - WEC-Authentication
+        - WEC-Services
+        - WEC-Process-Execution
+        - WEC-Code-Integrity
   when: not cec.exists
 
 - name: Ensure WEC service is started
