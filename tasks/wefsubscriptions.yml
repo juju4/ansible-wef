@@ -1,0 +1,61 @@
+---
+# https://github.com/clong/DetectionLab/blob/master/Vagrant/scripts/install-wefsubscriptions.ps1
+
+- name: Ensure Palantir windows-event-forwarding are present in system
+  win_copy:
+    src: "{{ item.s }}"
+    dest: "{{ item.d }}"
+  with_items:
+    - { s: 'c:\Program Files\windows-event-forwarding\windows-event-channels\CustomEventChannels.dll',
+        d: 'c:\windows\system32\CustomEventChannels.dll'
+      }
+    - { s: 'c:\Program Files\windows-event-forwarding\windows-event-channels\CustomEventChannels.man',
+        d: 'c:\windows\system32\CustomEventChannels.man'
+      }
+
+- name: Check if EventLog channel exists
+  win_reg_stat:
+    path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\CustomEventChannels'
+  register: cec
+ 
+- block:
+    - name: Create CustomEventChannels Event Log
+      win_command: >
+        wevtutil im "c:\windows\system32\CustomEventChannels.man"
+    - name: Resizing Channels to 4GB
+      win_command: >
+        wevtutil sl {{ item }} /ms:4294967296
+      with_items:
+        - WEC
+  when: not cec.stat.exists
+
+- name: Ensure WEC service is started
+  win_service:
+    name: wecsvc
+    state: started
+    start_mode: auto
+
+    path: 'c:\Program Files\windows-event-forwarding'
+- name: Check if Palantir wef-subscriptions are marked loaded
+  win_stat:
+    path: 'c:\Program Files\windows-event-forwarding\.wef_loaded'
+  register: wef_loaded
+
+- block:
+    - name: Load Palantir wef-subscriptions
+      win_command: >
+        for /r %i in (*.xml) do wecutil cs %i
+
+    - name: Enable Palantir wef-subscriptions
+      win_command: >
+        for /r %i in (*.xml) do wecutil ss %~ni /e:true
+
+    - name: Enabling WecUtil Quick Config...
+      win_command: >
+        wecutil qc /q:true
+
+    - name: Add marker for Palantir wef-subscriptions
+      win_file:
+        path: 'c:\Program Files\windows-event-forwarding\.wef_loaded'
+        state: touch
+  when: not wef_loaded.stat.exists
