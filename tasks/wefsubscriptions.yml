@@ -28,7 +28,7 @@
         wevtutil sl {{ item }} /ms:4294967296
       with_items:
         - WEC
-  when: not cec.stats.exist
+  when: not cec.exists
 
 - name: Ensure WEC service is started
   win_service:
