@@ -8,4 +8,4 @@
     win_audit_files: false
     win_audit_registry: false
   roles:
-    - juju4.dc
+    - juju4.wef

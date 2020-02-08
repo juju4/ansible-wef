@@ -10,4 +10,4 @@
     win_powershellmodules: []
     wef_detectionlab_stats: false
   roles:
-    - juju4.dc
+    - juju4.wef
