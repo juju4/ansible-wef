@@ -130,6 +130,7 @@ on_finish:
 - ps: |
     Get-NetTCPConnection -State Listen
     True
+- ps: Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels"
 - cmd: c:\opscode\inspec\bin\inspec.bat exec https://github.com/juju4/inspec-detectionlab-wef --input detectionlab_autologon_user=appveyor | tee c:\inspec.log || exit 0
 
 notifications:
