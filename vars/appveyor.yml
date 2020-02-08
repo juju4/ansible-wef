@@ -1,0 +1,11 @@
+---
+
+wef_system_updates: false
+wef_defender_removed: false
+wef_detectionlab_stats: false
+# no second interface option in appveyor
+wef_int_ip_address: "{{ ansible_ip_addresses[0] }}"
+
+_wef_chocolatey_ignore_errors: true
+
+detectionlab_online: false

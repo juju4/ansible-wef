@@ -1,0 +1,70 @@
+---
+# https://github.com/clong/DetectionLab/blob/master/Vagrant/scripts/install-redteam.ps1
+
+- name: Download mimikatz
+  win_get_url:
+    url: https://github.com/gentilkiwi/mimikatz/archive/master.zip
+    dest: C:\Users\vagrant\AppData\Local\Temp\mimikatz_trunk.zip
+    follow_redirects: all
+  register: mimidl
+  until: mimidl is success
+
+- name: Unzip Mimikatz archive
+  win_unzip:
+    src: C:\Users\vagrant\AppData\Local\Temp\mimikatz_trunk.zip
+    dest: C:\Tools\Mimikatz
+    creates: c:\Tools\Mimikatz\mimikatz-master\README.md
+
+# FIXME! virus detection
+- name: Download PowerSploit
+  win_get_url:
+    url: https://github.com/PowerShellMafia/PowerSploit/archive/dev.zip
+    dest: C:\Users\vagrant\AppData\Local\Temp\powersploit.zip
+    follow_redirects: all
+  register: sploitdl
+  until: sploitdl is success
+  when: wef_redteam_powersploit_dl|bool
+
+- name: Unzip Powersploit archive
+  win_unzip:
+    src: C:\Users\vagrant\AppData\Local\Temp\powersploit.zip
+    dest: C:\Tools\PowerSploit
+    creates: c:\Tools\PowerSploit\xxx
+  when: wef_redteam_powersploit_dl|bool
+
+# FIXME!
+- name: Copy PowerSploit modules
+  win_copy:
+    src: c:\Tools\PowerSploit\PowerSploit-dev\*
+    dest: c:\windows\System32\WindowsPowerShell\v1.0\Modules
+    remote_src: true
+  when: wef_redteam_powersploit_dl|bool
+
+- name: Download Atomic Red Team
+  win_get_url:
+    url: https://github.com/redcanaryco/atomic-red-team/archive/master.zip
+    dest: C:\Users\vagrant\AppData\Local\Temp\atomic_red_team.zip
+    follow_redirects: all
+  register: atodl
+  until: atodl is success
+
+- name: Unzip Atomic Red Team archive
+  win_unzip:
+    src: C:\Users\vagrant\AppData\Local\Temp\atomic_red_team.zip
+    dest: C:\Tools\Atomic Red Team
+    creates: c:\Tools\Atomic Red Team\atomic-red-team-master\README.md
+
+- name: Copy Atomic Red Team modules
+  win_copy:
+    src: "{{ detectionlab_gitroot }}\\vagrant\\resources\\windows\\Microsoft.PowerShell_profile.ps1"
+    dest: c:\windows\System32\WindowsPowerShell\v1.0\Modules\Microsoft.PowerShell_profile.ps1
+    remote_src: true
+
+# auto with ansible win_psmodule?
+#- name: Ensure NuGet is present
+#  win_shell: Install-PackageProvider -Name NuGet
+
+- name: Install Atomic requirements
+  win_psmodule:
+    name: powershell-yaml
+    state: present

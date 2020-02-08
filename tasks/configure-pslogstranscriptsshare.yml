@@ -1,0 +1,27 @@
+---
+
+- name: Powershell Transcripts Share | Disable inherited ACE's
+  win_acl_inheritance:
+    path: C:\pslogs
+    state: absent
+
+- name: Powershell Transcripts Share | Grant Administrators full control
+  win_acl:
+    user: Administrators
+    path: C:\pslogs
+    type: allow
+    rights: FullControl
+
+- name: Powershell Transcripts Share | Grant everyone else Write and ReadAttributes.
+  win_acl:
+    user: Everyone
+    path: C:\pslogs
+    type: allow
+    rights: Write,ReadAttributes
+
+- name: Powershell Transcripts Share | Add shared folder
+  win_share:
+    name: pslogs
+    path: C:\pslogs
+#    list: no
+    full: Authenticated users

@@ -1,0 +1,54 @@
+---
+# https://github.com/juju4/DetectionLab/blob/master/Vagrant/scripts/join-domain.ps1
+
+- name: Set DNS Server
+  win_dns_client:
+    adapter_names: '*'
+    ipv4_addresses:
+      - "{{ wef_external_dns | default(['8.8.8.8', '8.8.4.4']) }}"
+      - "{{ dc_int_ip_address | default('192.168.38.102') }}"
+    log_path: C:\dns_log.txt
+  tags:
+    - predomain
+
+- name: Set AutoLogon
+  win_regedit:
+    key: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+    value: "{{ item.v }}"
+    data: "{{ item.d }}"
+    datatype: dword
+  with_items:
+    - { v: AutoAdminLogon, d: '1' }
+    - { v: DefaultUserName, d: 'vagrant' }
+    - { v: DefaultPassword, d: 'vagrant' }
+  tags:
+    - predomain
+
+- name: Wef | set OU
+  set_fact:
+    domain_ou: "ou=Servers,dc=windomain,dc=local"
+  when: ansible_hostname == 'wef'
+  tags:
+    - predomain
+
+- name: Win10 | set OU
+  set_fact:
+    domain_ou: "ou=Workstations,dc=windomain,dc=local"
+  when: ansible_hostname == 'win10'
+  tags:
+    - predomain
+
+- name: Join domain
+  win_domain_membership:
+    dns_domain_name: windomain.local
+    hostname: "{{ ansible_hostname }}"
+    domain_admin_user: windomain.local\vagrant
+    domain_admin_password: vagrant
+    domain_ou_path: "{{ domain_ou | default(omit) }}"
+    state: domain
+    register: domain_state
+  notify:
+    - Windows reboot
+  tags:
+    - predomain
+  when: detectionlab_online

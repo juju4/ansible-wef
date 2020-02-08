@@ -1,0 +1,75 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.box = "peru/windows-server-2016-standard-x64-eval"
+    config.vm.guest = :windows
+    config.vm.communicator = "winrm"
+    config.vm.boot_timeout = 600
+
+## http://www.hurryupandwait.io/blog/understanding-and-troubleshooting-winrm-connection-and-authentication-a-thrill-seekers-guide-to-adventure
+    config.vm.provision "shell", path: "ConfigureRemotingForAnsible.ps1", privileged: true
+    config.vm.provision "shell", path: "SetNetworkCategory.ps1", privileged: true
+    config.vm.provision "shell", inline: "winrm set winrm/config/service '@{AllowUnencrypted=\"true\"}'", privileged: true
+## End testing
+## Configuration check
+#    config.vm.provision "shell", inline: "Test-WSMan -Authentication default", privileged: true
+#    config.vm.provision "shell", inline: "Test-PsRemoting", privileged: true
+#    config.vm.provision "shell", inline: "Get-PSSessionConfiguration", privileged: true
+#    config.vm.provision "shell", inline: "Get-Item WSMan:\\localhost\\Client\\TrustedHosts", privileged: true
+#    config.vm.provision "shell", inline: "Get-ChildItem WSMan:\\localhost\\Client\\DefaultPorts", privileged: true
+#    config.vm.provision "shell", inline: "Get-ChildItem WSMan:\\localhost\\Listener", privileged: true
+#    config.vm.provision "shell", inline: "Get-Service -Name winrm | Select Status", privileged: true
+#    config.vm.provision "shell", inline: "reg query HKLM\\software\\Microsoft\\Windows\\CurrentVersion\\Policies\\system", privileged: true
+# Host test
+# $ nc -z -w1 localhost 55985; echo $?
+# $ openssl s_client -connect localhost:55986 -showcerts </dev/null 2>/dev/null|openssl x509 -outform PEM
+# $ ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory -m win_ping -e ansible_winrm_server_cert_validation=ignore all
+# $ ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory -m win_ping -e ansible_winrm_server_cert_validation=ignore -e ansible_ssh_port=55986 all
+# $ ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory -e ansible_winrm_server_cert_validation=ignore -e ansible_ssh_port=55986 site.yml
+
+    config.vm.provision :ansible do |ansible|
+       ansible.playbook = "site.yml"
+       #ansible.verbose = "vvvv"
+       #ansible.host_key_checking = false
+       #ansible.limit = 'all'
+       ansible.become = false
+       ansible.compatibility_mode = "2.0"
+       #ansible.extra_vars = { ansible_winrm_server_cert_validation: 'ignore', ansible_port: 5986 }
+       ansible.extra_vars = { ansible_winrm_server_cert_validation: 'ignore' }
+       ansible.raw_arguments = ["--tags=predomain"]
+       ansible.groups = {
+          "myrole" => ["vwef" ],
+       }
+    end
+    config.vm.provision "reload"
+    config.vm.provision :ansible do |ansible|
+       ansible.playbook = "site.yml"
+       #ansible.verbose = "vvvv"
+       #ansible.host_key_checking = false
+       #ansible.limit = 'all'
+       ansible.become = false
+       ansible.compatibility_mode = "2.0"
+       #ansible.extra_vars = { ansible_winrm_server_cert_validation: 'ignore', ansible_port: 5986 }
+       ansible.extra_vars = { ansible_winrm_server_cert_validation: 'ignore' }
+       ansible.raw_arguments = ["--skip-tags=predomain"]
+       ansible.groups = {
+          "myrole" => ["vwef" ],
+       }
+    end
+    config.vm.provision "shell", inline: ". { iwr -useb https://omnitruck.chef.io/install.ps1 } | iex; install -project inspec", privileged: true
+    config.vm.provision "shell", inline: "c:\\opscode\\inspec\\bin\\inspec.bat exec https://github.com/juju4/inspec-detectionlab-dc | tee c:\\inspec.log", privileged: true, env: { 'CHEF_LICENSE': 'accept-no-persist'}
+
+    config.vm.network :private_network, ip: "192.168.38.103", gateway: "192.168.38.1"
+
+    config.vm.define "vwef" do |cfg|
+        cfg.vm.provider "virtualbox" do |v|
+          v.memory = 2048
+        end
+        #cfg.gui = true
+    end
+
+end

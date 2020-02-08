@@ -1,0 +1,11 @@
+---
+
+- name: Check SmbServerConfiguration AuditSmb1Access
+  win_shell: >
+    Get-SmbServerConfiguration | Foreach { $_.AuditSmb1Access }
+  changed_when: false
+  register: AuditSmb1Access
+
+- name: Set SmbServerConfiguration AuditSmb1Access to true
+  win_shell: "Set-SmbServerConfiguration -AuditSmb1Access $true -Force"
+  when: AuditSmb1Access.stdout_lines != 'True'

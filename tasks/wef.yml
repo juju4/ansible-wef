@@ -1,0 +1,133 @@
+---
+
+- name: Ensure appropriate services are started
+  win_service:
+    name: "{{ item }}"
+    state: started
+    start_mode: auto
+  with_items:
+    - wuauserv
+
+- name: Install security updates
+  win_updates:
+    category_names: SecurityUpdates
+  when: wef_system_updates|bool
+
+- name: Install git
+  win_chocolatey:
+    name: git
+    state: present
+
+- name: Check if existing DetectionLab directory
+  win_stat:
+    path: "{{ detectionlab_gitroot }}"
+  register: dir
+
+- name: Git clone Detectionlab
+  win_shell: "git clone https://github.com/clong/DetectionLab.git \"{{ detectionlab_gitroot }}\""
+  args:
+    chdir: 'c:\'
+  when: not dir.stat.exists
+
+- name: Install other applications with chocolatey
+  win_chocolatey:
+    name:
+# utilities
+      - NotepadPlusPlus
+      - GoogleChrome
+      - WinRar
+# sysinternals
+      - sysinternals
+# extras
+      - wireshark
+      - winpcap
+    state: present
+  ignore_errors: "{{ _wef_chocolatey_ignore_errors | default(false) }}"
+
+- name: Install classic-shell with chocolatey
+  win_chocolatey:
+    name:
+# utilities
+      - classic-shell
+    state: present
+    install_args: "ADDLOCAL=ClassicStartMenu"
+
+- name: Check if DetectionLab Menu Install has been done
+  win_stat:
+    path: 'c:\Program Files\Classic Shell\.menu_install_done'
+  register: menu_install
+
+- block:
+    - name: DetectionLab Menu
+      win_command: "\"C:\\Program Files\\Classic Shell\\ClassicStartMenu.exe\" -xml \"{{ detectionlab_gitroot }}\\vagrant\\resources\\windows\\MenuSettings.xml\""
+
+    - name: Add marker for DetectionLab Menu install
+      win_file:
+        path: 'c:\Program Files\Classic Shell\.menu_install_done'
+        state: touch
+  when: not menu_install.stat.exists and wef_menu|bool
+
+- name: Ensure directories exist
+  win_file:
+    dest: "{{ item }}"
+    state: directory
+  with_items:
+    - C:\Program Files\sysinternals
+    - C:\Users\vagrant\AppData\Local\Temp
+    - C:\Tools\Mimikatz
+    - C:\Tmp
+    - C:\pslogs
+    - C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\local
+
+- name: Ensure etc\hosts is valid
+  win_lineinfile:
+    path: c:\windows\system32\drivers\etc\hosts
+    regexp: "{{ item.re }}"
+    line: "{{ item.l }}"
+  with_items:
+    - { re: '^192.168.38.105    kolide', l: "192.168.38.105    kolide" }
+    - { re: "^{{ wef_int_ip_address | default('192.168.38.103') }}    wef.windomain.local",
+        l: "{{ wef_int_ip_address | default('192.168.38.103') }}    wef.windomain.local"
+      }
+
+- include: provision.yml
+- include: join-domain.yml
+  when: detectionlab_online
+- name: Rearm server license manager
+  win_command: "cscript c:\\windows\\system32\\slmgr.vbs -rearm"
+  tags:
+    - predomain
+  when: detectionlab_online
+- include: smb.yml
+
+- meta: flush_handlers
+
+- include: palantir.yml
+- include: wefsubscriptions.yml
+- include: splunk-uf.yml
+- include: splunk-windows_ta.yml
+- include: configure-pslogstranscriptsshare.yml
+- include: microsoft-ata.yml
+
+- name: Ensure Win Defender is not present
+  win_feature:
+    name: Windows-Defender-Features
+    state: absent
+  when: wef_defender_removed|bool
+
+- include: redteam.yml
+
+- name: Check if Microsoft-Windows-LiveId activity cleaned
+  win_stat:
+    path: 'c:\Program Files\.winliveid_cleaning_done'
+  register: winliveid_cleaning
+
+- block:
+    - name: Cleaning Microsoft-Windows-LiveId event log
+      win_shell: 'wevtutil el | Select-String -notmatch "Microsoft-Windows-LiveId" | Foreach-Object {wevtutil cl "$_"}'
+
+    - name: Add marker for Microsoft-Windows-LiveId activity cleaning
+      win_file:
+        path: 'c:\Program Files\.winliveid_cleaning_done'
+        state: touch
+  when: not winliveid_cleaning.stat.exists

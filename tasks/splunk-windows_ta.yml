@@ -1,0 +1,13 @@
+---
+# https://github.com/clong/DetectionLab/blob/master/Vagrant/scripts/install-windows_ta.ps1
+
+- name: Installing the Windows TA for Splunk
+  win_command: >
+    "C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk.exe" install app "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\splunk-add-on-for-microsoft-windows_500.tgz -auth admin:{{ wef_splunk_passwd | default('changeme') }}"
+  args:
+    creates: 'C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\default'
+
+- name: Ensure using DetectionLab inputs.conf
+  win_copy:
+    src: "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\wef_inputs.conf"
+    dest: 'C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\local\inputs.conf'

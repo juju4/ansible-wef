@@ -1,0 +1,37 @@
+---
+
+- name: Install git
+  win_chocolatey:
+    name: git
+    state: present
+
+- name: Check if existing palantir/windows-event-forwarding directory
+  win_stat:
+    path: 'c:\Program Files\windows-event-forwarding'
+  register: dir
+
+- name: Git clone AutorunsToWinEventLog
+  win_shell: git clone https://github.com/palantir/windows-event-forwarding.git
+  args:
+    chdir: 'c:\Program Files'
+  when: not dir.stat.exists
+
+- name: Check if AutorunsToWinEventLog Install has been done
+  win_stat:
+    path: 'c:\Program Files\windows-event-forwarding\.atwel_install_done'
+  register: atwel_install
+
+- block:
+    - name: Run AutorunsToWinEventLog install
+      win_shell: .\Install.ps1
+      args:
+        chdir: c:\Program Files\windows-event-forwarding\AutorunsToWinEventLog
+
+    - name: Run AutorunsToWinEventLog scheduled task once post-install
+      win_shell: Start-ScheduledTask -TaskName "AutorunsToWinEventLog"
+
+    - name: Add marker for AutorunsToWinEventLog install
+      win_file:
+        path: 'c:\Program Files\windows-event-forwarding\.atwel_install_done'
+        state: touch
+  when: not atwel_install.stat.exists

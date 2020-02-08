@@ -1,0 +1,141 @@
+version: 0.1.x.{build}
+skip_commits:
+  message: /^\(?doc|travis\)?.*/
+clone_depth: 10
+init:
+- SET
+- 'echo System architecture: %PLATFORM%'
+- 'echo %APPVEYOR_REPO_NAME%'
+
+environment:
+  winrm_user: winrm_test_user
+  winrm_password: WinRM_test_Pass@w0rd1
+  APPVEYOR_RDP_PASSWORD: WinRM_test_Pass@w0rd1
+  user_cert: c:\projects\ansible-wef\user.pem
+  user_key: c:\projects\ansible-wef\key.pem
+  user_pfx: c:\projects\ansible-wef\user.pfx
+  CYGWIN: winsymlinks:nativestrict
+  CHEF_LICENSE: accept-no-persist
+
+  matrix:
+  - SUITE: default
+    ANSIBLE_VERSION: 2.9.2
+    ANSIBLE_EXTRA_VARS:
+    TARGET: cygwin64
+    CYG_ROOT: C:\cygwin64
+    CYG_SETUP: C:\cygwin64\setup-x86_64.exe
+    CYG_CACHE: C:\cygwin64\var\cache\setup
+    CYG_BASH: C:\cygwin64\bin\sh
+# 2.8 missing win_get_url follow_redirects
+#  - SUITE: default
+#    ANSIBLE_VERSION: 2.8.7
+#    ANSIBLE_EXTRA_VARS:
+#    TARGET: cygwin64
+#    CYG_ROOT: C:\cygwin64
+#    CYG_SETUP: C:\cygwin64\setup-x86_64.exe
+#    CYG_CACHE: C:\cygwin64\var\cache\setup
+#    CYG_BASH: C:\cygwin64\bin\sh
+matrix:
+  fast_finish: true
+
+install:
+- cmd: ipconfig /all
+# setup winrm
+- ps: net user /Y /add $env:winrm_user $env:winrm_password
+- ps: net localgroup administrators $env:winrm_user /add
+- ps: $env:PATH="C:\OpenSSL-Win64\bin;$env:PATH"
+- ps: Import-Module $env:APPVEYOR_BUILD_FOLDER\test\appveyor\WinrmAppveyor.psm1
+- ps: New-ClientCertificate $env:winrm_user $env:APPVEYOR_BUILD_FOLDER
+- ps: $env:user_cert_thumb = (Import-pfxCertificate -FilePath $env:user_pfx -CertStoreLocation Cert:\LocalMachine\root).Thumbprint
+- ps: Import-pfxCertificate -FilePath $env:user_pfx -CertStoreLocation Cert:\LocalMachine\TrustedPeople
+- ps: $env:winrm_cert = (New-SelfSignedCertificate -DnsName localhost -CertStoreLocation cert:\localmachine\my).Thumbprint
+- ps: winrm create winrm/config/Listener?Address=*+Transport=HTTPS "@{Hostname=`"localhost`";CertificateThumbprint=`"$($env:winrm_cert)`"}"
+- ps: winrm set winrm/config/client/auth '@{Basic="true"}'
+- ps: winrm set winrm/config/service/auth '@{Basic="true"}'
+- ps: winrm set winrm/config/service/auth '@{Certificate="true"}'
+- ps: winrm set winrm/config/service/auth '@{CbtHardeningLevel="Strict"}'
+- ps: winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+- ps: New-WinrmUserCertificateMapping $env:user_cert_thumb
+- ps: $env:PATH="C:\Ruby$env:ruby_version\bin;$env:PATH"
+- ps: Write-Host $env:PATH
+- ps: ($pwd).path
+# setup ansible
+- cmd: "%CYG_SETUP% -qgnNdO -l %CYG_CACHE% -R %CYG_ROOT% -s http://cygwin.mirror.constant.com -P libssl-devel -P python2-devel -P python3-devel -P curl -P python-jinja -P python-crypto -P python-openssl -P python-setuptools -P git -P libffi-devel -P libcrypt-devel -P openssl-devel -P python36-cryptography"
+- cmd: "%CYG_BASH% -lc 'openssl version'"
+- cmd: "%CYG_BASH% -lc 'uname -a'"
+- cmd: "%CYG_BASH% -lc 'python -m ensurepip'"
+- cmd: "%CYG_BASH% -lc 'python3 -m ensurepip'"
+- cmd: "%CYG_BASH% -lc 'python3 -m pip install --upgrade pip'"
+- cmd: "%CYG_BASH% -lc 'python3 -m pip install pywinrm'"
+- cmd: "%CYG_BASH% -lc 'python3 -m pip install ansible==%ANSIBLE_VERSION%'"
+- cmd: "%CYG_BASH% -lc 'ansible --version'"
+- cmd: "%CYG_BASH% -lc 'echo localhost ansible_user=$winrm_user ansible_password=$winrm_password ansible_connection=winrm'"
+- cmd: "%CYG_BASH% -lc 'ls /'"
+- cmd: "%CYG_BASH% -lc 'ls -l /cygdrive/c/'"
+- cmd: "%CYG_BASH% -lc 'ls -l /cygdrive/c/projects/ansible-wef'"
+- cmd: "%CYG_BASH% -lc pwd"
+- cmd: "%CYG_BASH% -lc env"
+- cmd: "%CYG_BASH% -lc 'ansible -i /cygdrive/c/projects/ansible-wef/test/appveyor/inventory -m win_ping -vvv localhost'"
+- cmd: "%CYG_BASH% -lc 'mkdir -p /etc/ansible/roles'"
+- cmd: "%CYG_BASH% -lc 'cp /cygdrive/c/projects/ansible-wef/test/appveyor/ansible.cfg /etc/ansible'"
+- cmd: "%CYG_BASH% -lc 'cp -R /cygdrive/c/projects/ansible-wef /etc/ansible/roles/juju4.wef'"
+- cmd: "%CYG_BASH% -lc 'ansible-galaxy install -p /etc/ansible/roles -r /etc/ansible/roles/juju4.wef/requirements.yml'"
+- ps: |
+    . { iwr -useb https://omnitruck.chef.io/install.ps1 } | iex; install -project inspec
+
+build: off
+test_script:
+- cmd: "%CYG_BASH% -lc 'ansible-playbook /cygdrive/c/projects/ansible-wef/test/integration/$SUITE/default.yml --syntax-check'"
+# No DC
+#- cmd: "%CYG_BASH% -lc 'ansible-playbook -i /cygdrive/c/projects/ansible-wef/test/appveyor/inventory /cygdrive/c/projects/ansible-wef/test/integration/$SUITE/default.yml -vvv $ANSIBLE_EXTRA_VARS --tags=predomain'"
+#- ps: Restart-Computer -Force
+- ps: Start-Sleep -s 10
+- cmd: "%CYG_BASH% -lc 'ansible-playbook -i /cygdrive/c/projects/ansible-wef/test/appveyor/inventory /cygdrive/c/projects/ansible-wef/test/integration/$SUITE/default.yml -vvv $ANSIBLE_EXTRA_VARS --skip-tags=predomain'"
+
+for:
+  - matrix:
+      only:
+        - SUITE: default
+#    after_test:
+# Test idempotence - not enough time
+#    %CYG_BASH% -lc 'ansible-playbook -i /cygdrive/c/projects/ansible-wef/test/appveyor/inventory /cygdrive/c/projects/ansible-wef/test/integration/$SUITE/default.yml $ANSIBLE_EXTRA_VARS | tee /tmp/idempotency.log | grep -q "changed=0.*failed=0" && (echo "Idempotence test: pass" && exit 0) || (echo "Idempotence test: fail" && cat /tmp/idempotency.log && exit 0)'
+#    - cmd: |
+#        %CYG_BASH% -lc 'ansible-playbook -i /cygdrive/c/projects/ansible-wef/test/appveyor/inventory /cygdrive/c/projects/ansible-wef/test/integration/$SUITE/default.yml $ANSIBLE_EXTRA_VARS'
+
+on_failure:
+- cmd: "%CYG_BASH% -lc 'ansible -i /cygdrive/c/projects/ansible-wef/test/appveyor/inventory -m setup -vvv localhost'"
+#- ps: |
+#    Get-Content -Path C:\windows\Logs\CBS\CBS.log
+#    True
+- ps: |
+    Get-Content -Path C:\ProgramData\chocolatey\logs\chocolatey.log
+    True
+
+on_finish:
+- ps: |
+    Get-Process
+    True
+- ps: |
+    wmic path win32_process get name,commandline
+    True
+- ps: |
+    Get-Service | Where-Object {$_.Status -eq "Running"}
+    True
+- ps: |
+    Get-ChildItem -Path "C:\Program Files"
+    True
+- ps: |
+    Get-ChildItem -Path "C:\ProgramData"
+    True
+- ps: |
+    Get-NetTCPConnection -State Listen
+    True
+- cmd: c:\opscode\inspec\bin\inspec.bat exec https://github.com/juju4/inspec-detectionlab-wef --input detectionlab_autologon_user=appveyor | tee c:\inspec.log || exit 0
+
+notifications:
+- provider: Email
+  to:
+  - nobody@nowhere.com
+  on_build_success: false
+  on_build_failure: false
+  on_build_status_changed: false

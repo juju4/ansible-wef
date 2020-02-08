@@ -1,0 +1,19 @@
+---
+# https://github.com/clong/DetectionLab/blob/master/Vagrant/scripts/install-splunkuf.ps1
+
+- name: Downloading Splunk Universal Forwarder
+  win_get_url:
+    url: 'https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=windows&version=7.1.0&product=universalforwarder&filename=splunkforwarder-7.1.0-2e75b3406c5b-x64-release.msi&wget=true'
+    dest: 'c:\Tmp\splunkforwarder-7.1.0-2e75b3406c5b-x64-release.msi'
+    follow_redirects: all
+
+- name: Install Splunk Universal Forwarder
+  win_package:
+    path: 'c:\Tmp\splunkforwarder-7.1.0-2e75b3406c5b-x64-release.msi'
+    state: present
+    arguments: "/q RECEIVING_INDEXER=\"192.168.38.105:9997\" WINEVENTLOG_SEC_ENABLE=0 WINEVENTLOG_SYS_ENABLE=0 WINEVENTLOG_APP_ENABLE=0 AGREETOLICENSE=Yes SERVICESTARTTYPE=1 LAUNCHSPLUNK=1 SPLUNKPASSWORD={{ wef_splunk_passwd }}"
+
+- name: Ensure Splunk Universal Forwarder is running
+  win_service:
+    name: splunkforwarder
+    state: started

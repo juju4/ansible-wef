@@ -1,0 +1,63 @@
+---
+# https://github.com/clong/DetectionLab/blob/master/Vagrant/scripts/install-microsoft-ata.ps1
+
+- name: Microsoft ATA | Download
+  win_get_url:
+    url: http://download.microsoft.com/download/4/9/1/491394D1-3F28-4261-ABC6-C836A301290E/ATA1.9.iso
+    dest: 'c:\tmp\Microsoft ATA 1.9.iso'
+    checksum: DC1070A9E8F84E75198A920A2E00DDC3CA8D12745AF64F6B161892D9F3975857
+    checksum_algorithm: sha256
+
+- name: Microsoft ATA | Check for presence
+  win_stat:
+    path: 'C:\Program Files\Microsoft Advanced Threat Analytics\Center'
+  register: ata
+
+- block:
+    - name: Ensure an ISO is mounted
+      win_disk_image:
+        image_path: 'c:\tmp\Microsoft ATA 1.9.iso'
+        state: present
+      register: disk_image_out
+
+    - name: Run installer from mounted ISO
+      win_package:
+        path: '{{ disk_image_out.mount_paths[0] }}Microsoft ATA Center Setup.exe'
+        arguments: /q --LicenseAccepted NetFrameworkCommandLineArguments=`"/q`" --EnableMicrosoftUpdate
+        #product_id: 35a4e767-0161-46b0-979f-e61f282fee21
+        state: present
+
+    - name: Unmount ISO
+      win_disk_image:
+        image_path: 'c:\tmp\Microsoft ATA 1.9.iso'
+        state: absent
+  when: not ata.stats.exist
+
+- name: Microsoft ATA | Get DetectionLab config
+  win_command: "type {{ detectionlab_gitroot }}\\vagrant\\resources\\microsoft_ata\\microsoft-ata-config.json"
+  register: atacfg
+  changed_when: false
+
+- name: Get WEF certificate
+  win_uri:
+    url: https://wef
+  register: https_wef
+  changed_when: false
+
+# Need to recover Certificate HashString
+- debug: var=https_wef
+
+- name: Register host
+  win_uri:
+    url: https://localhost/api/management/systemProfiles/center
+    method: POST
+    content_type: "application/json"
+    body: "{{ atacfg | replace('{{THUMBPRINT}}', https_wef.hashstring_somewhere) }"
+  register: https_wef
+
+- name: pause
+  pause:
+    seconds: 60
+
+- include: microsoft-ata-dc.yml
+  when: wef_atalight_target|string and detectionlab_online

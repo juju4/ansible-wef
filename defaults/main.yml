@@ -1,0 +1,19 @@
+---
+# defaults file for juju4.wef
+
+# notify DetectionLab for usage statistics
+detectionlab_stats: true
+
+detectionlab_gitroot: 'c:\DetectionLab'
+wef_splunk_passwd: changeme
+wef_defender_removed: true
+wef_redteam_powersploit_dl: false
+wef_testing: false
+
+# set to true only if have all systems online or built together.
+# never the case for Appveyor for example
+detectionlab_online: false
+
+# default but may be necessary to change in some cases
+#wef_int_ip_address: 192.168.38.103
+#wef_int_ip_address: w.x.y.z

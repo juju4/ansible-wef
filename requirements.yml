@@ -1,0 +1,14 @@
+- name: juju4.win-osquery
+  src: https://github.com/juju4/ansible-win-osquery
+- name: juju4.win-sysmon
+  src: https://github.com/juju4/ansible-win-sysmon
+- name: juju4.win-audit
+  src: https://github.com/juju4/ansible-win-audit
+- name: juju4.win-applocker
+  src: https://github.com/juju4/ansible-win-applocker
+- name: juju4.win-audit
+  src: https://github.com/juju4/ansible-win-audit
+- name: juju4.win-eventlog
+  src: https://github.com/juju4/ansible-win-eventlog
+- name: juju4.win-powershell
+  src: https://github.com/juju4/ansible-win-powershell
