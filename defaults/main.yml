@@ -6,6 +6,7 @@ detectionlab_stats: true
 
 detectionlab_gitroot: 'c:\DetectionLab'
 wef_splunk_passwd: changeme
+wef_menu: true
 wef_defender_removed: true
 wef_redteam_powersploit_dl: false
 wef_testing: false
