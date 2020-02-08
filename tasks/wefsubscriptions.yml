@@ -5,6 +5,7 @@
   win_copy:
     src: "{{ item.s }}"
     dest: "{{ item.d }}"
+    remote_src: true
   with_items:
     - { s: 'c:\Program Files\windows-event-forwarding\windows-event-channels\CustomEventChannels.dll',
         d: 'c:\windows\system32\CustomEventChannels.dll'

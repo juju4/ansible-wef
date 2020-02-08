@@ -11,3 +11,4 @@
   win_copy:
     src: "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\wef_inputs.conf"
     dest: 'C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\local\inputs.conf'
+    remote_src: true
