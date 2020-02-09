@@ -39,11 +39,14 @@
   changed_when: false
 
 - name: Get WEF certificate
-  get_certificate:
-    host: wef
-    port: 443
+  win_shell: |
+    $req = [System.Net.WebRequest]::CreateHttp("https://wef")
+    try { $req.GetResponse() } catch { }
+    $ThumbPrint = $req.ServicePoint.Certificate.GetCertHashString()
+    echo $ThumbPrint
   run_once: true
   register: https_wef
+  ignore_errors: true
   changed_when: false
 
 # Need to recover Certificate HashString
@@ -54,8 +57,12 @@
     url: https://localhost/api/management/systemProfiles/center
     method: POST
     content_type: "application/json"
-    body: "{{ atacfg | replace('{{THUMBPRINT}}', https_wef.serial_number) }"
+    body: "{{ atacfg | replace('{{THUMBPRINT}}', https_wef.stdout_lines) }}"
+    url_username: "{{ wef_user | default(_wef_user) }}"
+    url_password: "{{ wef_userpass | default(_wef_userpass) }}"
     validate_certs: false
+  # FIXME!
+  ignore_errors: true
 
 - name: pause
   pause:

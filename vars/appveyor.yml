@@ -10,5 +10,8 @@ _wef_chocolatey_ignore_errors: true
 
 detectionlab_online: false
 
+_wef_user: winrm_test_user
+_wef_userpass: 'WinRM_test_Pass@w0rd1'
+
 wef_palantir_subscriptions:
   - ADFS
