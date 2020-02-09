@@ -86,8 +86,8 @@
     line: "{{ item.l }}"
   with_items:
     - { re: '^192.168.38.105    kolide', l: "192.168.38.105    kolide" }
-    - { re: "^{{ wef_int_ip_address | default('192.168.38.103') }}    wef.windomain.local",
-        l: "{{ wef_int_ip_address | default('192.168.38.103') }}    wef.windomain.local"
+    - { re: "^{{ wef_int_ip_address | default('192.168.38.103') }}    .*",
+        l: "{{ wef_int_ip_address | default('192.168.38.103') }}    wef.windomain.local wef"
       }
 
 - include: provision.yml
