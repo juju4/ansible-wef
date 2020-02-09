@@ -6,6 +6,7 @@ detectionlab_stats: true
 
 detectionlab_gitroot: 'c:\DetectionLab'
 wef_splunk_passwd: changeme
+wef_system_updates: true
 wef_menu: true
 wef_defender_removed: true
 wef_redteam_powersploit_dl: false
@@ -18,3 +19,57 @@ detectionlab_online: false
 # default but may be necessary to change in some cases
 #wef_int_ip_address: 192.168.38.103
 #wef_int_ip_address: w.x.y.z
+
+# https://github.com/palantir/windows-event-forwarding/tree/master/wef-subscriptions
+wef_palantir_subscriptions:
+  - ADFS
+  - Account-Lockout
+  - Account-Management
+  - Active-Directory
+  - Application-Crashes
+  - Applocker
+  - Authentication
+  - Autoruns
+  - Bits-Client
+  - Certificate-Authority
+  - Code-Integrity
+  - DNS
+  - Device-Guard
+  - Drivers
+  - Duo-Security
+  - EMET
+  - Event-Log-Diagnostics
+  - Explicit-Credentials
+  - Exploit-Guard-ASR
+  - Exploit-Guard-CFA
+  - Exploit-Guard-EP
+  - Exploit-Guard-NP
+  - External-Devices
+  - Firewall
+  - Group-Policy-Errors
+  - Kerberos
+  - Log-Deletion-Security
+  - Log-Deletion-System
+  - MSI-Packages
+  - Microsoft-Office
+  - NTLM
+  - Object-Manipulation
+  - Operating-System
+  - Powershell
+  - Print
+  - Privilege-Use
+  - Process-Execution
+  - Registry
+  - Services
+  - Shares
+  - Smart-Card
+  - Software-Restriction-Policies
+  - Sysmon
+  - System-Time-Change
+  - Task-Scheduler
+  - Terminal-Services
+  - WMI
+  - Windows-Defender
+  - Windows-Diagnostics
+  - Windows-Updates
+  - Wireless

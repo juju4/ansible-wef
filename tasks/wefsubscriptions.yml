@@ -42,7 +42,6 @@
     state: started
     start_mode: auto
 
-    path: 'c:\Program Files\windows-event-forwarding'
 - name: Check if Palantir wef-subscriptions are marked loaded
   win_stat:
     path: 'c:\Program Files\windows-event-forwarding\.wef_loaded'
@@ -51,11 +50,37 @@
 - block:
     - name: Load Palantir wef-subscriptions
       win_command: >
-        for /r %i in (*.xml) do wecutil cs %i
+        wecutil cs {{ item }}.xml
+      args:
+        chdir: c:\Program Files\windows-event-forwarding\wef-subscriptions
+      with_items: "{{ wef_palantir_subscriptions }}"
+      ignore_errors: true
+      register: lwef
+
+    # debug
+    - name: Get Palantir wef-subscriptions
+      win_command: >
+        wecutil gs {{ item }}
+      args:
+        chdir: c:\Program Files\windows-event-forwarding\wef-subscriptions
+      with_items: "{{ wef_palantir_subscriptions }}"
+      changed_when: false
+
+    - name: Retry Palantir wef-subscriptions
+      win_command: >
+        wecutil rs {{ item }}
+      args:
+        chdir: c:\Program Files\windows-event-forwarding\wef-subscriptions
+      with_items: "{{ wef_palantir_subscriptions }}"
+      ignore_errors: true
+      when: lwef is failed
 
     - name: Enable Palantir wef-subscriptions
       win_command: >
-        for /r %i in (*.xml) do wecutil ss %~ni /e:true
+        wecutil ss {{ item }} /e:true
+      args:
+        chdir: c:\Program Files\windows-event-forwarding\wef-subscriptions
+      with_items: "{{ wef_palantir_subscriptions }}"
 
     - name: Enabling WecUtil Quick Config...
       win_command: >
