@@ -7,5 +7,6 @@
     win_osquery_cert: 'c:\DetectionLab\vagrant\resources\fleet\server.crt'
     win_audit_files: false
     win_audit_registry: false
+    wef_atalight_target_enable: false
   roles:
     - juju4.wef

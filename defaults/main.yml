@@ -15,6 +15,8 @@ wef_testing: false
 # set to true only if have all systems online or built together.
 # never the case for Appveyor for example
 detectionlab_online: false
+# only if dc is available
+wef_atalight_target_enable: false
 
 # default but may be necessary to change in some cases
 #wef_int_ip_address: 192.168.38.103

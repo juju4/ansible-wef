@@ -69,4 +69,4 @@
     seconds: 60
 
 - include: microsoft-ata-dc.yml
-  when: wef_atalight_target|string and detectionlab_online
+  when: wef_atalight_target_enable|bool and detectionlab_online
