@@ -24,23 +24,25 @@
       win_package:
         path: '{{ disk_image_out.mount_paths[0] }}Microsoft ATA Center Setup.exe'
         arguments: /q --LicenseAccepted NetFrameworkCommandLineArguments=`"/q`" --EnableMicrosoftUpdate
-        #product_id: 35a4e767-0161-46b0-979f-e61f282fee21
+        product_id: 61DB68F8-F10C-44F0-BFD5-92A0C12D728F
         state: present
 
     - name: Unmount ISO
       win_disk_image:
         image_path: 'c:\tmp\Microsoft ATA 1.9.iso'
         state: absent
-  when: not ata.stats.exist
+  when: not ata.stat.exists
 
 - name: Microsoft ATA | Get DetectionLab config
-  win_command: "type {{ detectionlab_gitroot }}\\vagrant\\resources\\microsoft_ata\\microsoft-ata-config.json"
+  win_shell: "Get-Content {{ detectionlab_gitroot }}\\vagrant\\resources\\microsoft_ata\\microsoft-ata-config.json"
   register: atacfg
   changed_when: false
 
 - name: Get WEF certificate
-  win_uri:
-    url: https://wef
+  get_certificate:
+    host: wef
+    port: 443
+  run_once: true
   register: https_wef
   changed_when: false
 
@@ -52,8 +54,8 @@
     url: https://localhost/api/management/systemProfiles/center
     method: POST
     content_type: "application/json"
-    body: "{{ atacfg | replace('{{THUMBPRINT}}', https_wef.hashstring_somewhere) }"
-  register: https_wef
+    body: "{{ atacfg | replace('{{THUMBPRINT}}', https_wef.serial_number) }"
+    validate_certs: false
 
 - name: pause
   pause:
