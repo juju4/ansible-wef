@@ -6,6 +6,7 @@
     "C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk.exe" install app "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\splunk-add-on-for-microsoft-windows_500.tgz -auth admin:{{ wef_splunk_passwd | default('changeme') }}"
   args:
     creates: 'C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\default'
+  when: detectionlab_online|bool
 
 - name: Ensure using DetectionLab inputs.conf
   win_copy:
