@@ -9,3 +9,6 @@ wef_int_ip_address: "{{ ansible_ip_addresses[0] }}"
 _wef_chocolatey_ignore_errors: true
 
 detectionlab_online: false
+
+wef_palantir_subscriptions:
+  - ADFS
