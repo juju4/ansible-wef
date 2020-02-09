@@ -46,6 +46,7 @@
 - name: Get ATA config
   win_uri:
     url: https://localhost/api/management/systemProfiles/gateways
+    validate_certs: false
   register: config
   changed_when: false
   delegate_to: "{{ wef_atalight_target | default('dc') }}"
@@ -59,4 +60,5 @@
     method: POST
     content_type: "application/json"
     body: ($config[0] | convertto-json -depth 99)
+    validate_certs: false
   delegate_to: "{{ wef_atalight_target | default('dc') }}"
