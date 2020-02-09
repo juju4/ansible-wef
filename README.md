@@ -1,5 +1,9 @@
 [![Build Status - Master](https://travis-ci.org/juju4/ansible-wef.svg?branch=master)](https://travis-ci.org/juju4/ansible-wef)
 [![Build Status - Devel](https://travis-ci.org/juju4/ansible-wef.svg?branch=devel)](https://travis-ci.org/juju4/ansible-wef/branches)
+
+[![Appveyor - Master](https://ci.appveyor.com/api/projects/status/prvd4pijvphwl0no?svg=true)](https://ci.appveyor.com/project/juju4/ansible-wef)
+![Appveyor - Devel](https://ci.appveyor.com/api/projects/status/prvd4pijvphwl0no/branch/devel?svg=true)
+
 # DetectionLab Windows WEF ansible role
 
 Setup a Windows WEF server for [DetectionLab](https://github.com/clong/DetectionLab)
