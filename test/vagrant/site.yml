@@ -8,6 +8,6 @@
     win_audit_files: false
     win_audit_registry: false
     win_powershellmodules: []
-    wef_detectionlab_stats: false
+    detectionlab_stats: false
   roles:
     - juju4.wef
