@@ -80,6 +80,7 @@
         wecutil ss {{ item }} /e:true
       args:
         chdir: c:\Program Files\windows-event-forwarding\wef-subscriptions
+      ignore_errors: true
       with_items: "{{ wef_palantir_subscriptions }}"
 
     - name: Enabling WecUtil Quick Config...
