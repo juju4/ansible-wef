@@ -3,10 +3,22 @@
 
 - name: Installing the Windows TA for Splunk
   win_command: >
-    "C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk.exe" install app "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\splunk-add-on-for-microsoft-windows_500.tgz -auth admin:{{ wef_splunk_passwd | default('changeme') }}"
+    "C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk.exe" install app "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\splunk-add-on-for-microsoft-windows_500.tgz" -auth "admin:{{ wef_splunk_passwd | default('changeme') }}"
   args:
     creates: 'C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\default'
   when: detectionlab_online|bool
+  ignore_errors: true
+  register: winta
+
+- block:
+    - name: Update the Windows TA for Splunk
+      win_command: >
+        "C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk.exe" update app "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\splunk-add-on-for-microsoft-windows_500.tgz" -auth "admin:{{ wef_splunk_passwd | default('changeme') }}"
+      args:
+        creates: 'C:\Program Files\SplunkUniversalForwarder\etc\apps\Splunk_TA_windows\default'
+  when:
+    winta is failed and
+    detectionlab_online|bool
 
 - name: Ensure using DetectionLab inputs.conf
   win_copy:
