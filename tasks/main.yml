@@ -9,6 +9,11 @@
   include_vars: vagrant.yml
   when: ansible_user == 'vagrant'
 
+- name: variable check
+  fail:
+    msg: "Please define wef_user/wef_pass variables."
+  when: wef_user is not defined and _wef_user is not defined
+
 - name: Windows | WEF
   include: wef.yml
   when: ansible_os_family == "Windows"
