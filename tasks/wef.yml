@@ -86,6 +86,9 @@
     line: "{{ item.l }}"
   with_items:
     - { re: '^192.168.38.105    kolide', l: "192.168.38.105    kolide" }
+    - { re: "^{{ dc_int_ip_address | default('192.168.38.102') }}    dc.windomain.local windomain.local",
+        l: "{{ dc_int_ip_address | default('192.168.38.102') }}    dc.windomain.local windomain.local"
+      }
     - { re: "^{{ wef_int_ip_address | default('192.168.38.103') }}    .*",
         l: "{{ wef_int_ip_address | default('192.168.38.103') }}    wef.windomain.local wef"
       }
@@ -95,6 +98,7 @@
   when: detectionlab_online
 - name: Rearm server license manager
   win_command: "cscript c:\\windows\\system32\\slmgr.vbs -rearm"
+  ignore_errors: true
   tags:
     - predomain
   when: detectionlab_online
