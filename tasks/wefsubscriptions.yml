@@ -18,7 +18,7 @@
   win_reg_stat:
     path: 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\WEC-Powershell'
   register: cec
- 
+
 - block:
     - name: Create CustomEventChannels Event Log
       win_command: >
