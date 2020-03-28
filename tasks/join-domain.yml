@@ -5,8 +5,8 @@
   win_dns_client:
     adapter_names: '*'
     ipv4_addresses:
-      - "{{ wef_external_dns | default(['8.8.8.8', '8.8.4.4']) }}"
       - "{{ dc_int_ip_address | default('192.168.38.102') }}"
+      - "{{ detectionlab_external_dns | default('8.8.8.8') }}"
     log_path: C:\dns_log.txt
   tags:
     - predomain
@@ -16,11 +16,11 @@
     key: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
     value: "{{ item.v }}"
     data: "{{ item.d }}"
-    datatype: dword
+    datatype: "{{ item.t }}"
   with_items:
-    - { v: AutoAdminLogon, d: '1' }
-    - { v: DefaultUserName, d: 'vagrant' }
-    - { v: DefaultPassword, d: 'vagrant' }
+    - { v: AutoAdminLogon, d: '1', t: dword }
+    - { v: DefaultUserName, d: "{{ win_join_domain_user | default('windomain.local\vagrant') }}", t: string }
+    - { v: DefaultPassword, d: "{{ win_join_domain_pass | default('vagrant') }}", t: string }
   tags:
     - predomain
 
@@ -42,8 +42,8 @@
   win_domain_membership:
     dns_domain_name: windomain.local
     hostname: "{{ ansible_hostname }}"
-    domain_admin_user: windomain.local\vagrant
-    domain_admin_password: vagrant
+    domain_admin_user: "{{ win_join_domain_user | default('windomain.local\vagrant') }}"
+    domain_admin_password: "{{ win_join_domain_pass | default('vagrant') }}"
     domain_ou_path: "{{ domain_ou | default(omit) }}"
     state: domain
     register: domain_state
