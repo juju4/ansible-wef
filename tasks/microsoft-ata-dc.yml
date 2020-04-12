@@ -27,7 +27,7 @@
 - name: Microsoft ATA Lightweight gateway | Run installer
   win_package:
     path: 'C:\tmp\gatewaysetup\Microsoft ATA Gateway Setup.exe'
-    arguments: "/q NetFrameworkCommandLineArguments=`\"/q`\" ConsoleAccountName=`\"wef\{{ wef_user | default(_wef_user) }}`\" ConsoleAccountPassword=`\"{{ wef_userpass | default(_wef_userpass) }}`\""
+    arguments: "/q NetFrameworkCommandLineArguments=`\"/q`\" ConsoleAccountName=`\"wef\\{{ wef_user | default(_wef_user) }}`\" ConsoleAccountPassword=`\"{{ wef_userpass | default(_wef_userpass) }}`\""
     product_id: 85F8F0B0-4E3B-44AC-8BF6-9C2F33AD062C
     state: present
   delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
