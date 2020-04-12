@@ -6,42 +6,43 @@
     url: https://wef/api/management/softwareUpdates/gateways/deploymentPackage
     dest: 'c:\tmp\gatewaysetup.zip'
     validate_certs: false
-    url_username: wef\vagrant
-    url_password: vagrant
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+    url_username: "wef\\{{ wef_user | default(_wef_user) }}"
+    url_password: "{{ wef_userpass | default(_wef_userpass) }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - name: Microsoft ATA Lightweight gateway | Unzip
   win_unzip:
     src: c:\tmp\gatewaysetup.zip
     dest: C:\tmp\gatewaysetup
     creates: c:\tmp\gatewaysetup\Microsoft ATA Gateway Setup.exe
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - name: Microsoft ATA Lightweight gateway | Check for presence
   win_stat:
     path: 'C:\Program Files\Microsoft Advanced Threat Analytics'
   register: ata
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
+# FIXME!
 - name: Microsoft ATA Lightweight gateway | Run installer
   win_package:
     path: 'C:\tmp\gatewaysetup\Microsoft ATA Gateway Setup.exe'
-    arguments: /q NetFrameworkCommandLineArguments=`"/q`" ConsoleAccountName=`"wef\vagrant`" ConsoleAccountPassword=`"vagrant`"
-    #product_id: 35a4e767-0161-46b0-979f-e61f282fee21
+    arguments: "/q NetFrameworkCommandLineArguments=`\"/q`\" ConsoleAccountName=`\"wef\{{ wef_user | default(_wef_user) }}`\" ConsoleAccountPassword=`\"{{ wef_userpass | default(_wef_userpass) }}`\""
+    product_id: 85F8F0B0-4E3B-44AC-8BF6-9C2F33AD062C
     state: present
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - name: Sleeping 5 minutes to allow ATA gateway to start up...
   pause:
     seconds: 300
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - name: Microsoft ATA Lightweight gateway | Ensure service started
   win_service:
     name: ATAGateway
     state: started
     start_mode: auto
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - name: Get ATA config
   win_uri:
@@ -49,7 +50,7 @@
     validate_certs: false
   register: config
   changed_when: false
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - debug: var=config
 
@@ -61,4 +62,4 @@
     content_type: "application/json"
     body: ($config[0] | convertto-json -depth 99)
     validate_certs: false
-  delegate_to: "{{ wef_atalight_target | default('dc') }}"
+  delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
