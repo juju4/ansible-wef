@@ -4,12 +4,15 @@
 # notify DetectionLab for usage statistics
 detectionlab_stats: true
 
+base_name: DetectionLab0
 detectionlab_gitroot: 'c:\DetectionLab'
+detectionlab_splunk_app: "{{ detectionlab_gitroot }}\\vagrant\\resources\\splunk_forwarder\\splunk-add-on-for-microsoft-windows_700.tgz"
 wef_splunk_passwd: changeme
 wef_system_updates: true
 wef_menu: true
 wef_defender_removed: true
 wef_redteam_powersploit_dl: false
+detectionlab_redteam_powershell_yaml_install: false
 wef_testing: false
 
 # set to true only if have all systems online or built together.
