@@ -68,3 +68,4 @@
   win_psmodule:
     name: powershell-yaml
     state: present
+  when: detectionlab_redteam_powershell_yaml_install
