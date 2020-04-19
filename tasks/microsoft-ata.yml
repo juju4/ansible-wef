@@ -64,9 +64,11 @@
   # FIXME!
   ignore_errors: true
 
-- name: pause
-  pause:
-    seconds: 60
+# FIXME! not compatible if strategy: free. handlers?
+# https://github.com/ansible/ansible/issues/31504
+#- name: pause
+#  pause:
+#    seconds: 60
 
 - include: microsoft-ata-dc.yml
   when: wef_atalight_target_enable|bool and detectionlab_online
