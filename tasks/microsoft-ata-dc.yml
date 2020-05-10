@@ -24,17 +24,25 @@
   delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 # FIXME!
+# Install log: %USERPROFILE%\AppData\Local\Temp\Microsoft Advanced Threat Analalytics Gateway_YYYYMMDD*.txt
 - name: Microsoft ATA Lightweight gateway | Run installer
-  win_package:
-    path: 'C:\tmp\gatewaysetup\Microsoft ATA Gateway Setup.exe'
-    arguments: "/q NetFrameworkCommandLineArguments=`\"/q`\" ConsoleAccountName=`\"wef\\{{ wef_user | default(_wef_user) }}`\" ConsoleAccountPassword=`\"{{ wef_userpass | default(_wef_userpass) }}`\""
-    product_id: 85F8F0B0-4E3B-44AC-8BF6-9C2F33AD062C
-    state: present
+#  win_package:
+#    path: 'C:\tmp\gatewaysetup\Microsoft ATA Gateway Setup.exe'
+#    arguments: "/q NetFrameworkCommandLineArguments=`\"/q`\" ConsoleAccountName=`\"wef\\{{ wef_user | default(_wef_user) }}`\" ConsoleAccountPassword=`\"{{ wef_userpass | default(_wef_userpass) }}`\""
+#    product_id: 85F8F0B0-4E3B-44AC-8BF6-9C2F33AD062C
+#    state: present
+  win_shell: |
+    Start-Process -Wait -FilePath ".\Microsoft ATA Gateway Setup.exe" -ArgumentList "/q NetFrameworkCommandLineArguments=`"/q`" ConsoleAccountName=`"wef\\{{ wef_user | default(_wef_user) }}`" ConsoleAccountPassword=`"{{ wef_userpass | default(_wef_userpass) }}`""
+  args:
+    chdir: 'C:\tmp\gatewaysetup'
+    creates: 'C:\Program Files\Microsoft Advanced Threat Analytics\xxx'
   delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
-- name: Sleeping 5 minutes to allow ATA gateway to start up...
-  pause:
-    seconds: 300
+- name: Wait to allow ATA gateway to start up...
+  win_wait_for_process:
+    process_name_pattern: 'Microsoft ATA Gateway Setup'
+    state: absent
+    timeout: 500
   delegate_to: "{{ wef_atalight_target | default(base_name + 'dc') }}"
 
 - name: Microsoft ATA Lightweight gateway | Ensure service started
